@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-deployment
+  labels:
+    app: users
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+      - name: users
+        image: chuymedina96/utopia_flask_users:v1.0
+        ports:
+        - containerPort: 80
+        envFrom:
+        - secretRef:
+            name: docker-secrets
+        - configMapRef:
+            name: utopia-config
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flights-deployment
+  labels:
+    app: flights
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flights
+  template:
+    metadata:
+      labels:
+        app: flights
+    spec:
+      containers:
+      - name: flights
+        image: chuymedina96/utopia_flask_bookings:v1.0
+        ports:
+        - containerPort: 80
+        envFrom:
+        - secretRef:
+            name: docker-secrets
+        - configMapRef:
+            name: utopia-config
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookings-deployment
+  labels:
+    app: bookings
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookings
+  template:
+    metadata:
+      labels:
+        app: bookings
+    spec:
+      containers:
+      - name: bookings
+        image: chuymedina96/utopia_flask_bookings:v1.0
+        ports:
+        - containerPort: 80
+        envFrom:
+        - secretRef:
+            name: docker-secrets
+        - configMapRef:
+            name: utopia-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - name: mysql
+        image: mysql
+        imagePullPolicy: Never
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: flaskapi-secrets
+              key: db_root_password
+        ports:
+        - containerPort: 3306
+          name: db-container
+        volumeMounts:
+          - name: mysql-persistent-storage
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pv-claim
